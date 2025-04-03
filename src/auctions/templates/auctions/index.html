@@ -1,0 +1,41 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+<div>
+    <h2 class="text-center mb-5"><b>{{ title }} <i class="bi bi-fire"></i></b></h2>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            {% for listing in listings %}
+            <div class="col-md-4 mb-4">
+                <a href="{% url 'auctions:listing' listing.id %}" class="text-decoration-none text-dark">
+                    <div class="card shadow-lg h-100 rounded-3 hover-effect">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ listing.image }}" class="img-fluid rounded-start" style="object-fit: cover; height: 100%;"/>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    {% if listing.seller == request.user %}
+                                        <span class="badge bg-primary mb-3"><i class="bi bi-person-check"></i> My Listing</span>
+                                    {% endif %}
+                                    <h5 class="card-title text-dark"><b>{{ listing.title }}</b></h5>
+                                    <h6 class="card-text text-success"><b>Base Price</b>: ${{ listing.price }}</h6>
+                                    <p class="card-text text-muted">{{ listing.description|slice:":50" }}...</p> <!-- Truncate long descriptions -->
+                                    <p class="card-text">
+                                        <small class="text-muted">Created {{ listing.datetime }}</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

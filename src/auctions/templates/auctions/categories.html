@@ -1,0 +1,25 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+<h2 class="text-center mb-5"><b>Categories</b></h2>
+<div class="container">
+    <div class="row justify-content-center">
+        {% for category in categories %}
+        <div class="col-md-6 mb-4">
+            <a href="{% url 'auctions:index' %}?category={{ category }}" style="text-decoration: none; color: inherit;">
+                <div class="card shadow-lg border-light rounded-3 h-100 transition-transform">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-tags-fill mb-3" style="font-size: 2.5rem; color: #007bff;"></i>
+                        <h5 class="card-title mb-3" style="font-size: 1.25rem; letter-spacing: 1px; color: #333;"><b>{{ category.name }}</b></h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
+
