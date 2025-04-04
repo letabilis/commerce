@@ -111,20 +111,21 @@ def bid_view(request, listing_id):
     CONTEXT = {
         "entries" : Bids.objects.filter(listing=listing),
         "form": BidForm(),
-        "minimum_bid_amount" : listing.price + Decimal(0.5)
     }
 
     CONTEXT.update({
         "count": CONTEXT['entries'].count(),
-        "leading": CONTEXT['entries'].order_by("-amount").first()
+        "minimum_bid_amount": listing.price,
+        "premium": 0
     })
 
-    if CONTEXT['leading']:
-        profit = (((CONTEXT['leading'].amount / listing.price) - 1) * 100)
-        profit = round(profit, 2)
+
+    # Are there bids yet?
+    if leading := CONTEXT['entries'].order_by("-amount").first():
         CONTEXT.update({
-            "premium": profit,
-            "minimum_bid_amount": CONTEXT['leading'].amount + Decimal(0.5)
+            "leading": leading,
+            "minimum_bid_amount": leading.amount,
+            "premium": round((((leading.amount / listing.price) - 1) * 100), 2)
         })
 
 
@@ -146,7 +147,7 @@ def bid_view(request, listing_id):
             elif CONTEXT['form'].cleaned_data['amount'] < CONTEXT['minimum_bid_amount']:
                 messages.error(request, "Error: Low Bid")
 
-            elif request.user is listing.seller:
+            elif request.user == listing.seller:
                 messages.error(request, "Error: Unable to Bid in Own Auction!")
 
             else:
@@ -155,7 +156,7 @@ def bid_view(request, listing_id):
                     listing=listing,
                     amount=CONTEXT['form'].cleaned_data['amount']
                 )
-                messages.success(request, "Bid placed successfully!")
+                messages.success(request, "Bid placed.")
 
             return HttpResponseRedirect(reverse("auctions:listing", kwargs={"id": listing_id}))
 
@@ -181,11 +182,11 @@ def comment_view(request, listing_id):
             })
 
             if not CONTEXT['form'].is_valid():
-                messages.error(request, "Failed to place comment")
+                messages.error(request, "Failed to place comment.")
 
             else:
                 Comments.objects.create(commenter=request.user, listing=listing, content=CONTEXT['form'].cleaned_data['content'])
-                messages.success(request, "Sucess! Your Comment Was Sent!")
+                messages.success(request, "Comment sent.")
 
 
             return HttpResponseRedirect(reverse("auctions:listing", kwargs={"id": listing_id}))
@@ -233,8 +234,10 @@ def watchlist_view(request, listing_id=None, just_check_existence=False):
                 case "POST":
                     if entry := watchlist_view(request, listing_id, just_check_existence=True):
                         entry.delete()
+                        messages.info(request, "Item removed from watchlist.")
                     else:
                         Watchlist.objects.create(user=request.user, listing=listing)
+                        messages.success(request, "Item added to watchlist.")
 
                     return HttpResponseRedirect(reverse("auctions:listing", kwargs={"id":listing_id}))
 
@@ -260,6 +263,7 @@ def new_listing(request):
 
             if CONTEXT['form'].is_valid():
                 Listings.objects.create(seller=request.user, **CONTEXT['form'].cleaned_data)
+                messages.success(request, "Listing is live.")
 
             return HttpResponseRedirect(reverse("auctions:index"))
 
@@ -271,11 +275,12 @@ def close_listing(request, id):
     match request.method:
         case "POST":
             listing = Listings.objects.filter(pk=id).first()
-            if request.user is listing.seller:
+            if request.user == listing.seller:
                  listing.active = False
                  listing.save()
+                 messages.success(request, "The auction was closed successfully.")
             else:
-                messages.error(request, "Only the listing owner can end the auction.")
+                messages.error(request, "Error: Only the listing owner can end the auction.")
 
             return HttpResponseRedirect(reverse("auctions:index"))
 
